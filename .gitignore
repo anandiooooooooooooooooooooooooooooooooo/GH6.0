@@ -41,7 +41,3 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
-
-# === Build Artifacts ===
-coverage/
-build/
