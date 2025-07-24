@@ -9,8 +9,8 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-const genAI = new GoogleGenerativeAI(env.local.GEMINI_API_KEY)
-const supabase = createClient(env.local.SUPABASE_URL, env.local.SUPABASE_KEY)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 
 app.post('/suggest', async (req, res) => {
   const user = req.body
@@ -45,10 +45,13 @@ Respond in JSON like this:
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
     const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    let text = result.response.text()
 
+    // Clean and parse JSON
+    text = text.replace(/```json|```/g, '').trim()
     const json = JSON.parse(text)
 
+    // Save to Supabase
     await supabase.from('career_logs').insert([
       { user_data: user, result: json }
     ])
