@@ -2,6 +2,8 @@ import os
 import json
 from dotenv import load_dotenv
 import google.generativeai as genai
+from supabase import create_client, Client
+
 
 # Load environment variables from .env
 load_dotenv()
