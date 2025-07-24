@@ -11,7 +11,7 @@
 /frontend/*.tsbuildinfo
 
 # === Backend (Python / AI) ===
-/backend/process.env
+/backend/.env.local
 /backend/__pycache__/
 /backend/.venv/
 /backend/venv/

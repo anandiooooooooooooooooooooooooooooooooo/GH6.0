@@ -9,8 +9,8 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
+const genAI = new GoogleGenerativeAI(env.local.GEMINI_API_KEY)
+const supabase = createClient(env.local.SUPABASE_URL, env.local.SUPABASE_KEY)
 
 app.post('/suggest', async (req, res) => {
   const user = req.body
