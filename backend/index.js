@@ -4,11 +4,16 @@ const dotenv = require('dotenv')
 const { GoogleGenerativeAI } = require('@google/generative-ai')
 const { createClient } = require('@supabase/supabase-js')
 
-dotenv.config()
+// Load .env only in local development
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config()
+}
+
 const app = express()
 app.use(cors())
 app.use(express.json())
 
+// Use environment variables correctly
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 
@@ -45,22 +50,28 @@ Respond in JSON like this:
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
     const result = await model.generateContent(prompt)
-    let text = result.response.text()
 
-    // Clean and parse JSON
+    if (!result || !result.response) {
+      throw new Error('No response from Gemini API')
+    }
+
+    let text = result.response.text()
     text = text.replace(/```json|```/g, '').trim()
+
     const json = JSON.parse(text)
 
-    // Save to Supabase
+    // Store result in Supabase
     await supabase.from('career_logs').insert([
       { user_data: user, result: json }
     ])
 
     res.json(json)
   } catch (e) {
-    console.error(e)
-    res.status(500).json({ error: "Failed to process" })
+    console.error('❌ Error:', e.message)
+    res.status(500).json({ error: 'Failed to process suggestion', details: e.message })
   }
 })
 
-app.listen(5000, () => console.log('Server on http://localhost:5000'))
+// Use Railway's port or default to 5000
+const PORT = process.env.PORT || 5000
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`))
