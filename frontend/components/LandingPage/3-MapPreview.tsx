@@ -51,7 +51,7 @@ export const MapPreview = () => {
 
       <div className="text-center mt-8">
         <a
-          href="/login"
+          href="/auth/login"
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition"
         >
           Masuk & Mulai Petamu

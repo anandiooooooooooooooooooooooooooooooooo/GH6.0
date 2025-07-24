@@ -130,7 +130,7 @@ export function LoginForm({ className }: React.ComponentProps<"div">) {
               <div className="text-center text-sm text-stone-600">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href="/auth/register"
+                  href="/auth/sign-up"
                   className="font-semibold underline underline-offset-4"
                   style={{ color: accentColor }}
                 >
