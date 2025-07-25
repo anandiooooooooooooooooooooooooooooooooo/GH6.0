@@ -58,7 +58,7 @@ export async function getCareerSuggestions(profile: UserProfile) {
 
 
 // --- FUNGSI LAMA (TETAP DIPERTAHANKAN) ---
-export async function generateRoadmap(profile: any) {
+export async function generateRoadmap(profile: UserProfile & { preferred_career: string }) {
   const prompt = `
     Anda adalah seorang mentor karier dan perancang kurikulum AI. Tugas Anda adalah membuat peta jalan belajar (roadmap) yang detail dan realistis untuk seorang pengguna berdasarkan profil mereka.
 
@@ -66,7 +66,7 @@ export async function generateRoadmap(profile: any) {
     - Nama: ${profile.name}
     - Usia: ${profile.age}
     - Tingkat Pendidikan: ${profile.education_level}
-    - Keahlian Saat Ini: ${profile.skills.map((s: any) => `${s.name} (tingkat: ${s.level})`).join(", ")}
+    - Keahlian Saat Ini: ${profile.skills.map((s: { name: string; level: string }) => `${s.name} (tingkat: ${s.level})`).join(", ")}
     - Karier yang Diinginkan: ${profile.preferred_career}
 
     Buatlah peta jalan yang terdiri dari 3 hingga 5 fase belajar. Setiap fase harus memiliki judul yang jelas dan berisi 2 hingga 4 pencapaian (milestones). Setiap pencapaian harus memiliki judul, deskripsi singkat (aksi yang harus dilakukan), dan estimasi durasi.
@@ -106,7 +106,7 @@ export async function generateRoadmap(profile: any) {
 }
 
 // --- FUNGSI BARU UNTUK DATA DUMMY ---
-export async function generateDummyRoadmap(profile: any) {
+export async function generateDummyRoadmap(__profile: UserProfile & { preferred_career: string }) {
   console.log("✅ Menggunakan data roadmap DUMMY untuk pengembangan.");
 
   // Simulasi jeda waktu seperti panggilan API sungguhan

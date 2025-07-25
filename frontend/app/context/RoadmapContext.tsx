@@ -10,8 +10,8 @@ import {
 } from "react";
 
 // Tipe untuk data yang akan kita simpan
-type AnalysisResult = any;
-type RoadmapResult = any;
+type AnalysisResult = unknown;
+type RoadmapResult = unknown;
 
 // Tipe untuk nilai yang akan disediakan oleh Context
 interface RoadmapContextType {

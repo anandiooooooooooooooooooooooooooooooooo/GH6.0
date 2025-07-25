@@ -47,5 +47,13 @@ export default async function RoadmapPage() {
     );
   }
 
-  return <RoadmapClientPage profile={profile} roadmap={roadmapData.roadmap} />;
+  return (
+    <RoadmapClientPage
+      profile={{
+        ...profile,
+        preferred_career: "Software Engineer", // inject dummy
+      }}
+      roadmap={roadmapData.roadmap}
+    />
+  );
 }

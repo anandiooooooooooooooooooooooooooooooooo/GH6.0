@@ -92,9 +92,7 @@ function Dashboard({ userFullName }: { userFullName: string }) {
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<
-    boolean | null
-  >(null);
+  const [, setHasCompletedOnboarding] = useState<boolean | null>(null);
   const [userFullName, setUserFullName] = useState("Pengguna");
   const router = useRouter();
 

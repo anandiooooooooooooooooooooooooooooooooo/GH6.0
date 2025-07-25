@@ -57,14 +57,6 @@ export const HowItWorks = () => {
           {processSteps.map((step, index) => {
             const isOdd = index % 2 !== 0;
             // Varian animasi untuk efek geser dari kiri atau kanan
-            const variants = {
-              hidden: { opacity: 0, x: isOdd ? 100 : -100 },
-              visible: {
-                opacity: 1,
-                x: 0,
-                transition: { duration: 0.7, ease: "easeOut" },
-              },
-            };
 
             return (
               <motion.div

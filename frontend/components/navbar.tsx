@@ -16,8 +16,7 @@ const guestNavLinks = [
 ];
 const userNavLinks = [
   { title: "Dashboard", href: "/protected/dashboard" },
-  { title: "Roadmap Saya", href: "/protected/roadmap" },
-  { title: "Eksplorasi", href: "/explore" },
+  { title: "Roadmap", href: "/protected/roadmap" },
 ];
 
 // Reusable NavLink component

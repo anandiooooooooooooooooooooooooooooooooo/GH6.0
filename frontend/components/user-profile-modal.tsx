@@ -162,7 +162,7 @@ export function AnalysisModal({
 
       setSuggestedCareers(data.suggestions);
       setStep(3);
-    } catch (err: any) {
+    } catch (err: Error) {
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -197,7 +197,7 @@ export function AnalysisModal({
 
       onSuccess();
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: Error) {
       setError(err.message);
     } finally {
       setIsLoading(false);
