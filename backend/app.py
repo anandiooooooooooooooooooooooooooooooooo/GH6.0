@@ -2,6 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
+from flask_cors import CORS # <-- Import CORS
 from supabase import create_client, Client
 import google.generativeai as genai
 
@@ -10,6 +11,10 @@ print("--- Starting Server ---")
 print("Loading environment variables from .env file...")
 load_dotenv()
 app = Flask(__name__)
+
+# --- Cross-Origin Resource Sharing ---
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://your-frontend-app.vercel.app"]}})
+
 
 # --- Aggressive check for environment variables ---
 SUPABASE_URL = os.getenv("SUPABASE_URL")
