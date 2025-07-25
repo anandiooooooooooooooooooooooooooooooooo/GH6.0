@@ -2,6 +2,8 @@ import os
 import json
 from dotenv import load_dotenv
 import google.generativeai as genai
+from supabase import create_client, Client
+
 
 # Load environment variables from .env
 load_dotenv()
@@ -32,14 +34,30 @@ Suggest 3 best career options for this user:
 - Work Style: Team-based, flexible
 - Values: Innovation, impact, learning
 - Languages: English, Indonesian
+- Preferred career path: UI/UX Designer at a Creative Tech Agency
 
-Respond in valid JSON format only, like this:
+ Choose and then explain the steps to acquire the skills needed to achieve those careers. 
+
+ First, please skills required. Once you've listed them, I'd like you to explain each skill required one by one. 
+
+ Then, explain the steps to acquire all the required skills from their current educational level to achieve their career path. 
+
+ No need for skill acquisition steps.
+
+Respond in JSON like this:
 {
-  "careers": [
-    { "name": "...", "description": "..." },
-    { "name": "...", "description": "..." },
-    { "name": "...", "description": "..." }
+  "skills": [
+    { "skill_name": "..." },
+    { "skill_name": "..." },
+    { "skill_name": "..." }
+  ],
+
+  "skills_desc": [
+    { "skill_name": "...", "description": "..." },
+    { "skill_name": "...", "description": "..." },
+    { "skill_name": "...", "description": "..." },etc
   ]
+
 }
 """
 
