@@ -1,23 +1,35 @@
-import { ConceptExplainer } from "@/components/Features/KangJelasin";
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { AnalysisModal } from "@/components/user-profile-modal";
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 
 export default function HomePage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-8">
-      <div className="container mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Selamat Datang di Jembatan Keahlian 🚀
-          </h1>
-          <p className="mt-3 text-lg text-muted-foreground">
-            Navigator pribadi Anda untuk mencapai karir impian.
-          </p>
-        </div>
-
-        {/* Di sini kita akan menambahkan komponen lain nanti (Skill Gap, Learning Path) */}
-
-        {/* Fitur #3: Penerjemah Konsep */}
-        <ConceptExplainer />
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-8 text-center">
+      <div className="mx-auto bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-full w-fit shadow-lg">
+        <Sparkles className="h-12 w-12 text-white" />
       </div>
+      <h1 className="mt-6 text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
+        Jembatan Keahlian
+      </h1>
+      <p className="text-slate-600 mt-4 max-w-xl mx-auto">
+        Ubah cita-cita karir Anda menjadi rencana aksi yang nyata. Mulai dengan
+        analisis cerdas yang dipersonalisasi untuk Anda.
+      </p>
+      <Button
+        size="lg"
+        className="mt-8 text-lg py-7 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+        onClick={() => setIsModalOpen(true)}
+      >
+        Mulai Analisis Cerdas Saya
+      </Button>
+
+      {/* Memanggil modal yang sederhana dan elegan */}
+      <AnalysisModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </main>
   );
 }

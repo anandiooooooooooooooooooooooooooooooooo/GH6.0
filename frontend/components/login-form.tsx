@@ -43,7 +43,7 @@ export function LoginForm({ className }: React.ComponentProps<"div">) {
     if (error) {
       setError("Invalid email or password.");
     } else {
-      router.push("/pages/dashboard");
+      router.push("protected/dashboard");
       router.refresh();
     }
 

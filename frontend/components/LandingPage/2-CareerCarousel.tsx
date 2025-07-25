@@ -18,7 +18,7 @@ export const CareerCarousel = ({ search }: { search: string }) => {
 
   return (
     <motion.div
-      className="overflow-x-auto bg-white"
+      className="overflow-x-auto overflow-y-hidden bg-white scrollbar-hide"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7, delay: 0.6 }}
