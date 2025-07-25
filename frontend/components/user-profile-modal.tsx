@@ -1,11 +1,11 @@
+// components/analysis-modal.tsx
+
 "use client";
 
-import { useRoadmap } from "@/app/context/RoadmapContext"; // ✅ Impor custom hook kita
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
@@ -13,6 +13,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -30,54 +31,62 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { debounce } from "lodash";
-import { Loader2, X } from "lucide-react";
-import { useRouter } from "next/navigation"; // ✅ Impor useRouter untuk redirect
+import {
+  Briefcase,
+  Cake,
+  Heart,
+  Loader2,
+  Sparkles,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-const supabase = createClient(); // ✅ Inisialisasi Supabase client
+const supabase = createClient();
 
-// Tipe data
 type SkillLevel = "Dasar" | "Menengah" | "Mahir";
 type Skill = { id: number | null; name: string; level: SkillLevel };
 
-// === Komponen Utama Modal ===
+const educationLevels = [
+  "SMA / SMK Sederajat",
+  "Diploma (D1-D3)",
+  "Sarjana (S1)",
+  "Magister (S2)",
+  "Doktor (S3)",
+];
+const genders = ["Pria", "Wanita"];
+
 export function AnalysisModal({
   open,
   onOpenChange,
+  onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }) {
-  const router = useRouter(); // Inisialisasi router
-  const {
-    setAnalysis,
-    setRoadmap,
-    setIsLoading: setGlobalLoading,
-  } = useRoadmap(); // Gunakan state dari context
-
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State untuk form
-  const [fullName, setFullName] = useState("Siti Aisyah");
-  const [background, setBackground] = useState("Fresh Graduate S1 Desain");
-  const [experience, setExperience] = useState(
-    "Membuat beberapa desain logo dan postingan media sosial."
-  );
-  const [targetProfession, setTargetProfession] = useState("UI/UX Designer");
-  const [skills, setSkills] = useState<Skill[]>([
-    { id: null, name: "Figma", level: "Menengah" },
-    { id: null, name: "Canva", level: "Mahir" },
-  ]);
+  // State untuk data input pengguna
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
+  const [educationLevel, setEducationLevel] = useState("");
+  const [gender, setGender] = useState("");
+  const [preferences, setPreferences] = useState("");
+  const [skills, setSkills] = useState<Skill[]>([]);
 
-  // State untuk Autocomplete
+  // NEW: State untuk rekomendasi dan pilihan karier
+  const [suggestedCareers, setSuggestedCareers] = useState<string[]>([]);
+  const [selectedCareer, setSelectedCareer] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState<
     { id: number; name: string }[]
   >([]);
 
-  // (Fungsi addSkill, removeSkill, updateSkillLevel, debouncedSearch tetap sama seperti sebelumnya...)
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
       if (query.length < 2) {
@@ -107,82 +116,160 @@ export function AnalysisModal({
   const updateSkillLevel = (skillName: string, level: SkillLevel) =>
     setSkills(skills.map((s) => (s.name === skillName ? { ...s, level } : s)));
 
-  const handleAnalyzeAndRedirect = async () => {
+  // NEW: Fungsi untuk mengambil rekomendasi karier dari backend
+  const getCareerSuggestions = async () => {
     setIsLoading(true);
-    setGlobalLoading(true); // Set loading global untuk halaman roadmap
     setError(null);
     try {
-      // 1. Panggil Analisis Kesenjangan
-      const analysisRes = await fetch("http://localhost:8000/gap-analyzer", {
+      const biodata = {
+        name,
+        age: parseInt(age, 10) || 0,
+        education_level: educationLevel,
+        gender,
+        preferences,
+        skills,
+      };
+      const res = await fetch("http://localhost:8000/suggest-careers", {
+        // Pastikan endpoint ini ada
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target_profession: targetProfession,
-          current_skills: skills,
-          background: background,
-          experience: experience,
-        }),
+        body: JSON.stringify(biodata),
       });
-      if (!analysisRes.ok) throw new Error("Gagal saat analisis kesenjangan.");
-      const analysisData = await analysisRes.json();
-      setAnalysis(analysisData); // Simpan hasil ke context global
+      if (!res.ok)
+        throw new Error("Gagal mendapatkan rekomendasi karier dari server.");
 
-      // 2. Panggil Generator Roadmap
-      if (analysisData.gap_skills?.length > 0) {
-        const roadmapRes = await fetch("http://localhost:8000/the-bridge", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            target_profession: targetProfession,
-            background: background,
-            skill_gaps: analysisData.gap_skills,
-          }),
-        });
-        if (!roadmapRes.ok) throw new Error("Gagal saat membuat roadmap.");
-        const roadmapData = await roadmapRes.json();
-        setRoadmap(roadmapData); // Simpan hasil ke context global
+      const data = await res.json();
+      if (!data.suggestions || data.suggestions.length === 0) {
+        throw new Error("Tidak ada rekomendasi yang diterima dari server.");
       }
 
-      onOpenChange(false); // Tutup modal
-      router.push("/roadmap"); // ✅ Lakukan redirect ke halaman roadmap
+      setSuggestedCareers(data.suggestions);
+      setStep(3); // Lanjut ke langkah 3 (pemilihan)
     } catch (err: any) {
       setError(err.message);
-      setIsLoading(false); // Hentikan loading lokal jika error
-      setGlobalLoading(false); // Hentikan loading global jika error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleProfileSubmit = async () => {
+    if (!selectedCareer) {
+      setError("Silakan pilih salah satu rekomendasi karier.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user)
+        throw new Error("Pengguna tidak ditemukan. Silakan login ulang.");
+
+      const profileData = {
+        user_id: user.id,
+        name,
+        age: parseInt(age, 10) || null,
+        education_level: educationLevel,
+        gender,
+        skills,
+        preferences,
+        preferred_career: selectedCareer, // Menggunakan karier yang dipilih
+        profile_completed: true,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: upsertError } = await supabase
+        .from("profiles")
+        .upsert(profileData, { onConflict: "user_id" });
+      if (upsertError)
+        throw new Error(`Gagal menyimpan profil: ${upsertError.message}`);
+
+      onSuccess();
+      onOpenChange(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const FormStep1 = (
     <motion.div
       key={1}
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      <div className="grid gap-1.5">
-        <Label>Nama Lengkap</Label>
-        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label className="flex items-center gap-2 text-md text-[#003664]">
+            <User size={16} /> Nama Lengkap
+          </Label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nama Anda"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label className="flex items-center gap-2 text-md text-[#003664]">
+            <Cake size={16} /> Usia
+          </Label>
+          <Input
+            type="number"
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
+            placeholder="Contoh: 21"
+          />
+        </div>
       </div>
-      <div className="grid gap-1.5">
-        <Label>Latar Belakang</Label>
-        <Input
-          value={background}
-          onChange={(e) => setBackground(e.target.value)}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label className="flex items-center gap-2 text-md text-[#003664]">
+            <Users size={16} /> Jenis Kelamin
+          </Label>
+          <Select onValueChange={setGender} value={gender}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih Jenis Kelamin" />
+            </SelectTrigger>
+            <SelectContent>
+              {genders.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label className="flex items-center gap-2 text-md text-[#003664]">
+            <Briefcase size={16} /> Tingkat Pendidikan
+          </Label>
+          <Select onValueChange={setEducationLevel} value={educationLevel}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih Pendidikan Terakhir" />
+            </SelectTrigger>
+            <SelectContent>
+              {educationLevels.map((level) => (
+                <SelectItem key={level} value={level}>
+                  {level}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-      <div className="grid gap-1.5">
-        <Label>Pengalaman</Label>
+      <div className="grid gap-2">
+        <Label className="flex items-center gap-2 text-md text-[#003664]">
+          <Heart size={16} /> Preferensi & Minat
+        </Label>
         <Textarea
-          value={experience}
-          onChange={(e) => setExperience(e.target.value)}
-        />
-      </div>
-      <div className="grid gap-1.5">
-        <Label>Profesi Tujuan</Label>
-        <Input
-          value={targetProfession}
-          onChange={(e) => setTargetProfession(e.target.value)}
+          value={preferences}
+          onChange={(e) => setPreferences(e.target.value)}
+          placeholder="Contoh: Suka bekerja dalam tim, menyukai tantangan visual..."
         />
       </div>
     </motion.div>
@@ -191,21 +278,21 @@ export function AnalysisModal({
   const FormStep2 = (
     <motion.div
       key={2}
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.3 }}
       className="space-y-4"
     >
       <div className="grid gap-1.5">
-        <Label>Inventaris Keahlian</Label>
-        <Command className="border rounded-lg">
+        <Label className="text-md text-[#003664]">Keahlian yang Dimiliki</Label>
+        <Command className="border rounded-lg border-[#DAE0E4]">
           <CommandInput
             placeholder="Cari skill..."
             value={searchTerm}
             onValueChange={setSearchTerm}
           />
           <CommandList>
-            <CommandEmpty>Tidak ditemukan.</CommandEmpty>
             {suggestions.map((s) => (
               <CommandItem key={s.id} onSelect={() => addSkill(s)}>
                 {s.name}
@@ -218,9 +305,14 @@ export function AnalysisModal({
         {skills.map((skill) => (
           <div
             key={skill.name}
-            className="flex items-center justify-between gap-2 p-2 border rounded-md"
+            className="flex items-center justify-between gap-2 p-2 border rounded-md border-[#DAE0E4]"
           >
-            <Badge variant="outline">{skill.name}</Badge>
+            <Badge
+              variant="outline"
+              className="bg-[#67C6E3]/20 text-[#2975A7] border-[#67C6E3]/50"
+            >
+              {skill.name}
+            </Badge>
             <div className="flex items-center gap-2">
               <Select
                 value={skill.level}
@@ -240,7 +332,7 @@ export function AnalysisModal({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-slate-500 hover:bg-red-100 hover:text-red-600"
                 onClick={() => removeSkill(skill.name)}
               >
                 <X className="h-4 w-4" />
@@ -252,45 +344,124 @@ export function AnalysisModal({
     </motion.div>
   );
 
+  // NEW: UI untuk Langkah 3 (Rekomendasi)
+  const FormStep3 = (
+    <motion.div
+      key={3}
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-4"
+    >
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-[#003664]">
+          Rekomendasi Karier Untukmu
+        </h3>
+        <p className="text-sm text-[#2975A7]">
+          Berdasarkan profilmu, berikut 3 karier yang paling sesuai. Silakan
+          pilih satu.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+        {suggestedCareers.map((career) => (
+          <button
+            key={career}
+            onClick={() => setSelectedCareer(career)}
+            className={`p-6 border-2 rounded-lg text-center transition-all duration-200 flex flex-col items-center justify-center h-32
+              ${
+                selectedCareer === career
+                  ? "border-[#67C6E3] bg-[#67C6E3]/10 ring-2 ring-[#67C6E3]/50"
+                  : "border-[#DAE0E4] hover:border-[#2975A7]"
+              }`}
+          >
+            <span className="font-bold text-lg text-[#003664]">{career}</span>
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Langkah {step} dari 2:{" "}
-            {step === 1 ? "Profil Anda" : "Keahlian Anda"}
+      <DialogContent className="max-w-2xl p-0 border-[#DAE0E4] bg-white">
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="text-2xl font-bold text-[#003664] flex items-center gap-3">
+            <Sparkles className="text-[#67C6E3]" />
+            Lengkapi Profil Anda
           </DialogTitle>
-          <Progress value={step * 50} className="mt-2" />
+          <DialogDescription className="text-md text-[#2975A7]">
+            Langkah {step} dari 3:{" "}
+            {step === 1
+              ? "Profil Dasar"
+              : step === 2
+              ? "Inventaris Keahlian"
+              : "Pilih Karier"}
+          </DialogDescription>
+          <Progress
+            value={(step / 3) * 100}
+            className="mt-4 h-2 [&>*]:bg-[#67C6E3]"
+          />
         </DialogHeader>
-        <div className="py-6">
+        <div className="px-6 py-2 h-[450px] overflow-y-auto">
           <AnimatePresence mode="wait">
-            {step === 1 ? FormStep1 : FormStep2}
+            {step === 1 && FormStep1}
+            {step === 2 && FormStep2}
+            {step === 3 && FormStep3}
           </AnimatePresence>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between p-6 bg-slate-50/50 border-t border-[#DAE0E4]">
           <Button
             variant="outline"
-            onClick={() => setStep(1)}
+            onClick={() => setStep(step - 1)}
             disabled={step === 1}
+            className="border-[#DAE0E4] text-[#2975A7]"
           >
             Kembali
           </Button>
-          {step === 1 && <Button onClick={() => setStep(2)}>Lanjut</Button>}
+
+          {step === 1 && (
+            <Button
+              onClick={() => setStep(2)}
+              className="bg-[#2975A7] text-white hover:bg-[#003664]"
+            >
+              Lanjut ke Keahlian
+            </Button>
+          )}
           {step === 2 && (
-            <Button onClick={handleAnalyzeAndRedirect} disabled={isLoading}>
+            <Button
+              onClick={getCareerSuggestions}
+              disabled={isLoading}
+              className="bg-[#2975A7] text-white hover:bg-[#003664]"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
                   Menganalisis...
                 </>
               ) : (
-                <>Selesai & Lihat Roadmap</>
+                "Dapatkan Rekomendasi"
+              )}
+            </Button>
+          )}
+          {step === 3 && (
+            <Button
+              onClick={handleProfileSubmit}
+              disabled={isLoading}
+              className="bg-[#67C6E3] text-white hover:bg-[#2975A7]"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...
+                </>
+              ) : (
+                "Simpan Profil & Lanjutkan"
               )}
             </Button>
           )}
         </div>
         {error && (
-          <p className="text-sm text-red-500 mt-2 text-center">{error}</p>
+          <p className="text-sm text-red-500 px-6 pb-4 text-center">{error}</p>
         )}
       </DialogContent>
     </Dialog>
