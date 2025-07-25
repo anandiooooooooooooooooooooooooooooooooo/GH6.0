@@ -2,6 +2,7 @@
 
 "use client";
 
+import { getCareerSuggestions } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +48,7 @@ const supabase = createClient();
 
 type SkillLevel = "Dasar" | "Menengah" | "Mahir";
 type Skill = { id: number | null; name: string; level: SkillLevel };
+type CareerSuggestion = { career_name: string; career_description: string };
 
 const educationLevels = [
   "SMA / SMK Sederajat",
@@ -70,7 +72,6 @@ export function AnalysisModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State untuk data input pengguna
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [educationLevel, setEducationLevel] = useState("");
@@ -78,8 +79,9 @@ export function AnalysisModal({
   const [preferences, setPreferences] = useState("");
   const [skills, setSkills] = useState<Skill[]>([]);
 
-  // NEW: State untuk rekomendasi dan pilihan karier
-  const [suggestedCareers, setSuggestedCareers] = useState<string[]>([]);
+  const [suggestedCareers, setSuggestedCareers] = useState<CareerSuggestion[]>(
+    []
+  );
   const [selectedCareer, setSelectedCareer] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,35 +118,50 @@ export function AnalysisModal({
   const updateSkillLevel = (skillName: string, level: SkillLevel) =>
     setSkills(skills.map((s) => (s.name === skillName ? { ...s, level } : s)));
 
-  // NEW: Fungsi untuk mengambil rekomendasi karier dari backend
-  const getCareerSuggestions = async () => {
+  const handleSaveAndSuggest = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const biodata = {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Pengguna tidak ditemukan.");
+
+      const profileDataForSupabase = {
+        user_id: user.id,
+        name,
+        age: parseInt(age, 10) || null,
+        education_level: educationLevel,
+        gender,
+        skills,
+        preferences,
+        profile_completed: false,
+      };
+
+      // FIXED: onConflict sekarang menggunakan 'user_id' yang benar
+      const { error: upsertError } = await supabase
+        .from("profiles")
+        .upsert(profileDataForSupabase, { onConflict: "id" });
+
+      if (upsertError)
+        throw new Error(`Gagal menyimpan profil awal: ${upsertError.message}`);
+
+      const profileDataForGemini = {
         name,
         age: parseInt(age, 10) || 0,
         education_level: educationLevel,
         gender,
-        preferences,
         skills,
+        preferences,
       };
-      const res = await fetch("http://localhost:8000/suggest-careers", {
-        // Pastikan endpoint ini ada
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(biodata),
-      });
-      if (!res.ok)
-        throw new Error("Gagal mendapatkan rekomendasi karier dari server.");
+      const data = await getCareerSuggestions(profileDataForGemini);
 
-      const data = await res.json();
-      if (!data.suggestions || data.suggestions.length === 0) {
-        throw new Error("Tidak ada rekomendasi yang diterima dari server.");
-      }
+      if (data.error) throw new Error(data.error);
+      if (!data.suggestions || data.suggestions.length === 0)
+        throw new Error("Tidak ada rekomendasi yang diterima.");
 
       setSuggestedCareers(data.suggestions);
-      setStep(3); // Lanjut ke langkah 3 (pemilihan)
+      setStep(3);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -152,7 +169,7 @@ export function AnalysisModal({
     }
   };
 
-  const handleProfileSubmit = async () => {
+  const handleFinalizeOnboarding = async () => {
     if (!selectedCareer) {
       setError("Silakan pilih salah satu rekomendasi karier.");
       return;
@@ -163,27 +180,20 @@ export function AnalysisModal({
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user)
-        throw new Error("Pengguna tidak ditemukan. Silakan login ulang.");
+      if (!user) throw new Error("Pengguna tidak ditemukan.");
 
-      const profileData = {
-        user_id: user.id,
-        name,
-        age: parseInt(age, 10) || null,
-        education_level: educationLevel,
-        gender,
-        skills,
-        preferences,
-        preferred_career: selectedCareer, // Menggunakan karier yang dipilih
-        profile_completed: true,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error: upsertError } = await supabase
+      const { error: finalUpdateError } = await supabase
         .from("profiles")
-        .upsert(profileData, { onConflict: "user_id" });
-      if (upsertError)
-        throw new Error(`Gagal menyimpan profil: ${upsertError.message}`);
+        .update({
+          preferred_career: selectedCareer,
+          profile_completed: true,
+        })
+        .eq("user_id", user.id);
+
+      if (finalUpdateError)
+        throw new Error(
+          `Gagal menyelesaikan proses: ${finalUpdateError.message}`
+        );
 
       onSuccess();
       onOpenChange(false);
@@ -344,7 +354,6 @@ export function AnalysisModal({
     </motion.div>
   );
 
-  // NEW: UI untuk Langkah 3 (Rekomendasi)
   const FormStep3 = (
     <motion.div
       key={3}
@@ -366,16 +375,20 @@ export function AnalysisModal({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
         {suggestedCareers.map((career) => (
           <button
-            key={career}
-            onClick={() => setSelectedCareer(career)}
-            className={`p-6 border-2 rounded-lg text-center transition-all duration-200 flex flex-col items-center justify-center h-32
-              ${
-                selectedCareer === career
-                  ? "border-[#67C6E3] bg-[#67C6E3]/10 ring-2 ring-[#67C6E3]/50"
-                  : "border-[#DAE0E4] hover:border-[#2975A7]"
-              }`}
+            key={career.career_name}
+            onClick={() => setSelectedCareer(career.career_name)}
+            className={`p-4 border-2 rounded-lg text-left transition-all duration-200 h-36 flex flex-col ${
+              selectedCareer === career.career_name
+                ? "border-[#67C6E3] bg-[#67C6E3]/10 ring-2 ring-[#67C6E3]/50"
+                : "border-[#DAE0E4] hover:border-[#2975A7]"
+            }`}
           >
-            <span className="font-bold text-lg text-[#003664]">{career}</span>
+            <span className="font-bold text-lg text-[#003664]">
+              {career.career_name}
+            </span>
+            <span className="text-xs text-[#2975A7] mt-1">
+              {career.career_description}
+            </span>
           </button>
         ))}
       </div>
@@ -419,7 +432,6 @@ export function AnalysisModal({
           >
             Kembali
           </Button>
-
           {step === 1 && (
             <Button
               onClick={() => setStep(2)}
@@ -430,7 +442,7 @@ export function AnalysisModal({
           )}
           {step === 2 && (
             <Button
-              onClick={getCareerSuggestions}
+              onClick={handleSaveAndSuggest}
               disabled={isLoading}
               className="bg-[#2975A7] text-white hover:bg-[#003664]"
             >
@@ -446,8 +458,8 @@ export function AnalysisModal({
           )}
           {step === 3 && (
             <Button
-              onClick={handleProfileSubmit}
-              disabled={isLoading}
+              onClick={handleFinalizeOnboarding}
+              disabled={isLoading || !selectedCareer}
               className="bg-[#67C6E3] text-white hover:bg-[#2975A7]"
             >
               {isLoading ? (

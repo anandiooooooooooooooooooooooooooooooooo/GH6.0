@@ -47,6 +47,7 @@ print("✅ Supabase and Gemini clients configured successfully.")
 
 # --- 2. Gemini API Functions ---
 
+@app.route('/gen-career-recommend', methods=['POST'])
 def get_career_suggestions_from_gemini(user_profile: dict) -> dict:
     """
     STEP 1: Asks Gemini for 3 career suggestions (name and description).
@@ -54,7 +55,7 @@ def get_career_suggestions_from_gemini(user_profile: dict) -> dict:
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
     prompt = f"""
     You are a concise career advisor. Based on the following user profile, suggest the 3 best career paths.
-    
+
     User Profile:
     - Name: {user_profile.get('name', 'N/A')}
     - Age: {user_profile.get('age', 'N/A')}
@@ -121,7 +122,7 @@ def generate_career_titles_endpoint():
     request_data = request.get_json()
     if not request_data or 'user_id' not in request_data:
         return jsonify({"error": "Missing 'user_id' in request body"}), 400
-    
+
     user_uuid = request_data['user_id']
     print(f"Request for user_id (UUID): {user_uuid}")
 
@@ -131,7 +132,7 @@ def generate_career_titles_endpoint():
         if not user_profile_response.data:
             print(f"❌ ERROR: User with UUID {user_uuid} not found. Supabase returned 0 rows.")
             return jsonify({"error": f"User with UUID {user_uuid} not found."}), 404
-        
+
         user_profile = user_profile_response.data
         integer_user_id = user_profile['id']
         print(f"Successfully fetched profile for user with integer id: {integer_user_id}")
@@ -139,7 +140,7 @@ def generate_career_titles_endpoint():
         suggestions_json = get_career_suggestions_from_gemini(user_profile)
         if "error" in suggestions_json or "suggestions" not in suggestions_json:
             return jsonify(suggestions_json), 500
-        
+
         suggestions = suggestions_json["suggestions"]
         print(f"Received suggestions from Gemini: {suggestions}")
 
@@ -184,13 +185,13 @@ def generate_skill_details_endpoint():
         user_profile_response = supabase.from_('profiles').select('*').eq('user_id', user_uuid).single().execute()
         if not user_profile_response.data:
             return jsonify({"error": "Could not re-fetch user profile after update."}), 404
-        
+
         full_user_profile = user_profile_response.data
-        
+
         skills_json = get_skill_details_from_gemini(full_user_profile)
         if "error" in skills_json or "skills_descriptions" not in skills_json:
             return jsonify(skills_json), 500
-        
+
         print("✅ Successfully generated skill details from Gemini.")
 
         skills_to_save = [
