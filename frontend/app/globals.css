@@ -43,3 +43,18 @@
   display: none;
   /* Chrome, Safari, Opera */
 }
+
+/* globals.css */
+
+html,
+body,
+main {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
