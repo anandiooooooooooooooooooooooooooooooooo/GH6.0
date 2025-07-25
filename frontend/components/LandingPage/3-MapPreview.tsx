@@ -12,7 +12,7 @@ export const MapPreview = () => {
   ];
 
   return (
-    <section className="bg-slate-50">
+    <section>
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-slate-800">
           Intip Jalur Mimpi Kamu
