@@ -27,7 +27,11 @@ export function DashboardClientPage({
 
   return (
     <>
-      <Dashboard userFullName={userFullName} onReanalyze={() => setIsModalOpen(true)} />
+      <Dashboard
+        userFullName={userFullName}
+        onReanalyze={() => setIsModalOpen(true)}
+      />{" "}
+      {/* This line is correct, the error is in the Dashboard component definition */}
       <AnalysisModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}

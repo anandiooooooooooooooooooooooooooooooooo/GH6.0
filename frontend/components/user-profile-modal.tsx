@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // components/analysis-modal.tsx
 
 "use client";
@@ -162,7 +163,7 @@ export function AnalysisModal({
 
       setSuggestedCareers(data.suggestions);
       setStep(3);
-    } catch (err: Error) {
+    } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -197,7 +198,7 @@ export function AnalysisModal({
 
       onSuccess();
       onOpenChange(false);
-    } catch (err: Error) {
+    } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);

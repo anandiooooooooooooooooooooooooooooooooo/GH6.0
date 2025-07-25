@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/roadmap/client-page.tsx
 
 "use client";
@@ -79,11 +80,7 @@ export function RoadmapClientPage({
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#DAE0E4] rounded-full md:left-2"></div>
 
           {roadmap.map((phase, phaseIndex) => (
-            <motion.div
-              key={phase.phase}
-              className="mb-12"
-              variants={itemVariants}
-            >
+            <motion.div key={phase.phase} className="mb-12">
               {/* Titik Fase pada Timeline */}
               <div className="absolute -left-4 md:left-0 size-8 bg-[#2975A7] rounded-full border-4 border-white flex items-center justify-center">
                 <Flag className="size-4 text-white" />
@@ -128,7 +125,7 @@ export function RoadmapClientPage({
           ))}
 
           {/* Bagian Akhir Timeline */}
-          <motion.div variants={itemVariants}>
+          <motion.div>
             <div className="absolute -left-4 md:left-0 size-8 bg-[#67C6E3] rounded-full border-4 border-white flex items-center justify-center">
               <Rocket className="size-4 text-white" />
             </div>

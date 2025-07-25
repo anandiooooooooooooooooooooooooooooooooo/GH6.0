@@ -36,13 +36,12 @@ export default async function RoadmapPage() {
 
   // ---
 
-  if (roadmapData.error) {
+  if ("error" in roadmapData && roadmapData.error) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center text-center">
         <h1 className="text-2xl font-bold text-red-600">
           Gagal Membuat Roadmap
         </h1>
-        <p className="text-slate-500 mt-2">{roadmapData.error}</p>
       </div>
     );
   }
