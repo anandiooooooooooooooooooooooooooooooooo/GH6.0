@@ -1,6 +1,3 @@
-# app.py (v12 - Adjusted for 'users' table name)
-# Description: This version is updated to use the plural 'users' table name.
-
 import os
 import json
 from dotenv import load_dotenv
@@ -129,8 +126,8 @@ def generate_career_titles_endpoint():
     print(f"Request for user_id (UUID): {user_uuid}")
 
     try:
-        # **CHANGE: Using 'users' table**
-        user_profile_response = supabase.from_('users').select('*').eq('user_id', user_uuid).single().execute()
+        # **CHANGE: Using 'profiles' table**
+        user_profile_response = supabase.from_('profiles').select('*').eq('user_id', user_uuid).single().execute()
         if not user_profile_response.data:
             print(f"❌ ERROR: User with UUID {user_uuid} not found. Supabase returned 0 rows.")
             return jsonify({"error": f"User with UUID {user_uuid} not found."}), 404
@@ -179,12 +176,12 @@ def generate_skill_details_endpoint():
     print(f"Request for user_id (UUID): {user_uuid} with chosen career: {preferred_career}")
 
     try:
-        # **CHANGE: Using 'users' table**
-        supabase.from_('users').update({'preferred_career': preferred_career}).eq('user_id', user_uuid).execute()
+        # **CHANGE: Using 'profiles' table**
+        supabase.from_('profiles').update({'preferred_career': preferred_career}).eq('user_id', user_uuid).execute()
         print(f"Successfully updated user's preferred career to '{preferred_career}'")
 
-        # **CHANGE: Using 'users' table**
-        user_profile_response = supabase.from_('users').select('*').eq('user_id', user_uuid).single().execute()
+        # **CHANGE: Using 'profiles' table**
+        user_profile_response = supabase.from_('profiles').select('*').eq('user_id', user_uuid).single().execute()
         if not user_profile_response.data:
             return jsonify({"error": "Could not re-fetch user profile after update."}), 404
         
@@ -206,9 +203,9 @@ def generate_skill_details_endpoint():
             supabase.from_('skills').insert(skills_to_save).execute()
             print("✅ Successfully saved skills to the 'skills' table.")
 
-        # **CHANGE: Using 'users' table**
+        # **CHANGE: Using 'profiles' table**
         print("⏳ Setting 'profile_completed' to true for the user...")
-        supabase.from_('users').update({'profile_completed': True}).eq('user_id', user_uuid).execute()
+        supabase.from_('profiles').update({'profile_completed': True}).eq('user_id', user_uuid).execute()
         print("✅ User profile marked as completed.")
 
         return jsonify(skills_json), 200
