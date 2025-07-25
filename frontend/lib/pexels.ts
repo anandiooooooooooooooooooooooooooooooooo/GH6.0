@@ -30,6 +30,7 @@ export const fetchCareerImages = async () => {
       return fallbackData;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return data.photos.map((photo: any, index: number) => ({
       name: careerQueries[index],
       img: photo.src.medium,

@@ -85,6 +85,7 @@ export function ConceptExplainer() {
       } else {
         throw new Error("Format respons dari server tidak sesuai.");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     } finally {

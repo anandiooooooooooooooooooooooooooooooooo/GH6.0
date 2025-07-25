@@ -101,6 +101,7 @@ export function AnalysisModal({
       });
       setSuggestions(data || []);
     }, 300),
+
     []
   );
   useEffect(() => {
@@ -145,6 +146,7 @@ export function AnalysisModal({
         .upsert(profileDataForSupabase, { onConflict: "id" });
 
       if (upsertError)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw new Error(`Gagal menyimpan profil awal: ${upsertError.message}`);
 
       const profileDataForGemini = {
