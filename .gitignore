@@ -1,44 +1,43 @@
-# === Frontend (Next.js) ===
-/frontend/node_modules
-/frontend/.next
-/frontend/out
-/frontend/.vercel
-/frontend/coverage
-/frontend/build
-/frontend/.env
-/frontend/.env*.local
-/frontend/next-env.d.ts
-/frontend/*.tsbuildinfo
-
-# === Backend (Python / AI) ===
-/backend/.env.local
-/backend/__pycache__/
-/backend/.venv/
-/backend/venv/
-/backend/env/
-/backend/.env
-/backend/.env*.local
-/backend/*.pyc
-/backend/*.pyo
-/backend/*.pyd
-/backend/.pytest_cache/
-/backend/.mypy_cache/
-/backend/.coverage
-
-# === Common ===
-.DS_Store
-*.log
-*.pem
-*.tsbuildinfo
+# === Node ===
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# === Yarn (optional, if using yarn) ===
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# === Next.js ===
+.next/
+out/
+dist/
+.vercel/
+
+# === Environment ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# === Supabase ===
+supabase/.temp/
+supabase/migrations/.temp/
+supabase/functions/.netlify/
+.supabase/
+*.supabase/*
+
+# === Logs ===
+logs/
+*.log
+*.csv
+*.pid
+*.seed
+*.pid.lock
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Editor ===
+.vscode/
+.idea/
+*.swp
