@@ -10,16 +10,6 @@ const careers = [
       "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?q=80&w=800",
   },
   {
-    title: "Data Scientist",
-    image:
-      "https://images.unsplash.com/photo-1579762715118-a6f3d4b9045b?q=80&w=800",
-  },
-  {
-    title: "Product Manager",
-    image:
-      "https://images.unsplash.com/photo-1522071820081-009f0129c7da?q=80&w=800",
-  },
-  {
     title: "Digital Marketer",
     image:
       "https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=800",
