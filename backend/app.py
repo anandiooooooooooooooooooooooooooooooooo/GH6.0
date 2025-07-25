@@ -1,6 +1,5 @@
-# app.py (v11 - Adjusted for new table schema)
-# Description: This version is updated to match the latest database schema, including
-# saving career descriptions and updating the 'profile_completed' status.
+# app.py (v12 - Adjusted for 'users' table name)
+# Description: This version is updated to use the plural 'users' table name.
 
 import os
 import json
@@ -56,7 +55,6 @@ def get_career_suggestions_from_gemini(user_profile: dict) -> dict:
     STEP 1: Asks Gemini for 3 career suggestions (name and description).
     """
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
-    # **CHANGE: Prompt now asks for name and a short description**
     prompt = f"""
     You are a concise career advisor. Based on the following user profile, suggest the 3 best career paths.
     
@@ -131,7 +129,8 @@ def generate_career_titles_endpoint():
     print(f"Request for user_id (UUID): {user_uuid}")
 
     try:
-        user_profile_response = supabase.from_('user').select('*').eq('user_id', user_uuid).single().execute()
+        # **CHANGE: Using 'users' table**
+        user_profile_response = supabase.from_('users').select('*').eq('user_id', user_uuid).single().execute()
         if not user_profile_response.data:
             print(f"❌ ERROR: User with UUID {user_uuid} not found. Supabase returned 0 rows.")
             return jsonify({"error": f"User with UUID {user_uuid} not found."}), 404
@@ -147,11 +146,10 @@ def generate_career_titles_endpoint():
         suggestions = suggestions_json["suggestions"]
         print(f"Received suggestions from Gemini: {suggestions}")
 
-        # **CHANGE: Prepare data for the new 'career_suggestions' table structure**
         suggestions_to_save = [
             {
-                'user_profile_id': integer_user_id, # The integer ID for the foreign key relationship
-                'user_id': user_uuid,               # The UUID for direct user linking
+                'user_profile_id': integer_user_id,
+                'user_id': user_uuid,
                 'career_name': sug.get('career_name'),
                 'career_description': sug.get('career_description')
             } for sug in suggestions
@@ -181,10 +179,12 @@ def generate_skill_details_endpoint():
     print(f"Request for user_id (UUID): {user_uuid} with chosen career: {preferred_career}")
 
     try:
-        supabase.from_('user').update({'preferred_career': preferred_career}).eq('user_id', user_uuid).execute()
+        # **CHANGE: Using 'users' table**
+        supabase.from_('users').update({'preferred_career': preferred_career}).eq('user_id', user_uuid).execute()
         print(f"Successfully updated user's preferred career to '{preferred_career}'")
 
-        user_profile_response = supabase.from_('user').select('*').eq('user_id', user_uuid).single().execute()
+        # **CHANGE: Using 'users' table**
+        user_profile_response = supabase.from_('users').select('*').eq('user_id', user_uuid).single().execute()
         if not user_profile_response.data:
             return jsonify({"error": "Could not re-fetch user profile after update."}), 404
         
@@ -206,9 +206,9 @@ def generate_skill_details_endpoint():
             supabase.from_('skills').insert(skills_to_save).execute()
             print("✅ Successfully saved skills to the 'skills' table.")
 
-        # **CHANGE: Update profile_completed flag to true**
+        # **CHANGE: Using 'users' table**
         print("⏳ Setting 'profile_completed' to true for the user...")
-        supabase.from_('user').update({'profile_completed': True}).eq('user_id', user_uuid).execute()
+        supabase.from_('users').update({'profile_completed': True}).eq('user_id', user_uuid).execute()
         print("✅ User profile marked as completed.")
 
         return jsonify(skills_json), 200
